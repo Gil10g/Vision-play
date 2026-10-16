@@ -1,0 +1,140 @@
+
+name: Construir APK Vision Play
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Preparar Java
+        uses: actions/checkout@v4
+
+      - name: Instalar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Instalar Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Criar projeto Android
+        run: |
+          mkdir -p app/src/main/java/com/visionplay/app
+          mkdir -p app/src/main/res/values
+          cat > settings.gradle <<'EOF'
+          pluginManagement {
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          rootProject.name = "VisionPlay"
+          include(":app")
+          EOF
+          cat > build.gradle <<'EOF'
+          plugins {
+              id 'com.android.application' version '8.7.3' apply false
+          }
+          EOF
+          cat > app/build.gradle <<'EOF'
+          plugins {
+              id 'com.android.application'
+          }
+          android {
+              namespace 'com.visionplay.app'
+              compileSdk 35
+              defaultConfig {
+                  applicationId 'com.visionplay.app'
+                  minSdk 23
+                  targetSdk 35
+                  versionCode 1
+                  versionName '1.0'
+              }
+          }
+          EOF
+          cat > app/src/main/AndroidManifest.xml <<'EOF'
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <application
+                  android:theme="@android:style/Theme.Material.Light.NoActionBar"
+                  android:label="Vision Play"
+                  android:usesCleartextTraffic="false">
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN"/>
+                          <category android:name="android.intent.category.LAUNCHER"/>
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          EOF
+          cat > app/src/main/java/com/visionplay/app/MainActivity.java <<'EOF'
+          package com.visionplay.app;
+
+          import android.app.Activity;
+          import android.os.Bundle;
+          import android.graphics.Color;
+          import android.view.Gravity;
+          import android.widget.LinearLayout;
+          import android.widget.TextView;
+
+          public class MainActivity extends Activity {
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  LinearLayout layout = new LinearLayout(this);
+                  layout.setOrientation(LinearLayout.VERTICAL);
+                  layout.setGravity(Gravity.CENTER);
+                  layout.setPadding(28, 28, 28, 28);
+                  layout.setBackgroundColor(Color.rgb(18, 24, 38));
+
+                  TextView title = new TextView(this);
+                  title.setText("VISION PLAY");
+                  title.setTextSize(30);
+                  title.setTextColor(Color.WHITE);
+                  title.setGravity(Gravity.CENTER);
+                  layout.addView(title);
+
+                  TextView subtitle = new TextView(this);
+                  subtitle.setText("Vídeos • Música • Tradução");
+                  subtitle.setTextSize(18);
+                  subtitle.setTextColor(Color.LTGRAY);
+                  subtitle.setGravity(Gravity.CENTER);
+                  subtitle.setPadding(0, 24, 0, 24);
+                  layout.addView(subtitle);
+
+                  TextView info = new TextView(this);
+                  info.setText("Bem-vindo ao Vision Play!\\nCriado por Gil da Paixão");
+                  info.setTextSize(16);
+                  info.setTextColor(Color.WHITE);
+                  info.setGravity(Gravity.CENTER);
+                  layout.addView(info);
+
+                  setContentView(layout);
+              }
+          }
+          EOF
+
+      - name: Construir APK
+        run: gradle assembleDebug
+
+      - name: Disponibilizar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Vision-Play-APK
+          path: app/build/outputs/apk/debug/app-debug.apk
