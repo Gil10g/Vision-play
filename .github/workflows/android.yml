@@ -108,8 +108,7 @@ jobs:
                   layout.setOrientation(LinearLayout.VERTICAL);
                   layout.setGravity(Gravity.CENTER);
                   layout.setPadding(28, 28, 28, 28);
-                  layout.setBackgroundColor(Color.rgb(18, 24, 38));
-
+                  layout.setBackgroundColor(Color.WHITE);
                   TextView title = new TextView(this);
                   title.setText("VISION PLAY");
                   title.setTextSize(30);
